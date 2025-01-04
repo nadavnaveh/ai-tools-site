@@ -109,8 +109,15 @@
             transition: transform 0.8s;
         }
 
-        .card:hover .card-inner {
+        .card-inner.flipped {
             transform: rotateY(180deg);
+        }
+
+        /* Keep the hover effect for desktop */
+        @media (hover: hover) {
+            .card:hover .card-inner {
+                transform: rotateY(180deg);
+            }
         }
 
         .card-front, .card-back {
@@ -542,6 +549,42 @@
                 button.classList.add('active');
                 filterCards();
             });
+        });
+
+        // Add touch support for cards
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('touchstart', function(e) {
+                // Prevent search field from losing focus on mobile
+                if (e.target.closest('.search-box')) return;
+                
+                e.preventDefault();
+                const innerCard = this.querySelector('.card-inner');
+                const wasFlipped = innerCard.classList.contains('flipped');
+                
+                // Remove flipped class from all other cards
+                document.querySelectorAll('.card-inner.flipped').forEach(otherCard => {
+                    if (otherCard !== innerCard) {
+                        otherCard.classList.remove('flipped');
+                    }
+                });
+                
+                // Toggle the clicked card
+                innerCard.classList.toggle('flipped');
+                
+                // If this card was already flipped and we're clicking a link, allow the link click
+                if (wasFlipped && e.target.tagName === 'A') {
+                    return true;
+                }
+            });
+        });
+
+        // Close flipped cards when clicking outside
+        document.addEventListener('touchstart', function(e) {
+            if (!e.target.closest('.card')) {
+                document.querySelectorAll('.card-inner.flipped').forEach(card => {
+                    card.classList.remove('flipped');
+                });
+            }
         });
     </script>
 </body>
