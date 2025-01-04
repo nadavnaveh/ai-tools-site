@@ -551,26 +551,50 @@
             });
         });
 
-        // Add touch support for cards
+        // Add touch support for cards with scroll detection
+        let touchStartY = 0;
+        let touchStartX = 0;
+        let touchStartTime = 0;
+        const TOUCH_THRESHOLD = 10; // pixels of movement allowed before preventing flip
+        const TIME_THRESHOLD = 200; // maximum milliseconds for a tap
+
         document.querySelectorAll('.card').forEach(card => {
             card.addEventListener('touchstart', function(e) {
-                // Prevent search field from losing focus on mobile
+                // Store initial touch position and time
+                touchStartY = e.touches[0].clientY;
+                touchStartX = e.touches[0].clientX;
+                touchStartTime = Date.now();
+            }, { passive: true });
+
+            card.addEventListener('touchend', function(e) {
+                // Calculate movement and time
+                const touchEndY = e.changedTouches[0].clientY;
+                const touchEndX = e.changedTouches[0].clientX;
+                const moveY = Math.abs(touchEndY - touchStartY);
+                const moveX = Math.abs(touchEndX - touchStartX);
+                const timeElapsed = Date.now() - touchStartTime;
+
+                // If significant movement or too slow, don't flip
+                if (moveY > TOUCH_THRESHOLD || moveX > TOUCH_THRESHOLD || timeElapsed > TIME_THRESHOLD) {
+                    return;
+                }
+
+                // Prevent search field from losing focus
                 if (e.target.closest('.search-box')) return;
-                
-                e.preventDefault();
+
                 const innerCard = this.querySelector('.card-inner');
                 const wasFlipped = innerCard.classList.contains('flipped');
-                
+
                 // Remove flipped class from all other cards
                 document.querySelectorAll('.card-inner.flipped').forEach(otherCard => {
                     if (otherCard !== innerCard) {
                         otherCard.classList.remove('flipped');
                     }
                 });
-                
+
                 // Toggle the clicked card
                 innerCard.classList.toggle('flipped');
-                
+
                 // If this card was already flipped and we're clicking a link, allow the link click
                 if (wasFlipped && e.target.tagName === 'A') {
                     return true;
@@ -578,14 +602,14 @@
             });
         });
 
-        // Close flipped cards when clicking outside
+        // Close flipped cards when touching outside
         document.addEventListener('touchstart', function(e) {
             if (!e.target.closest('.card')) {
                 document.querySelectorAll('.card-inner.flipped').forEach(card => {
                     card.classList.remove('flipped');
                 });
             }
-        });
+        }, { passive: true });
     </script>
 </body>
 </html>
